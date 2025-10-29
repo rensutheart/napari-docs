@@ -362,9 +362,10 @@ $ python3 -m http.server --directory docs/_build/html
 ```{note}
 The entire build process pulls together files from multiple sources and can be time consuming, with a full build taking upwards of 20 minutes. Additionally, building the examples gallery, as well as executing notebook cells, will repeatedly launch `napari`, resulting in flashing windows. 
 
-Depending on what you want to contribute, you may never need to run the full build locally. See [Building what you need](building-what-you-need) for details.
+Depending on what you want to contribute, you may never need to run the full build locally. See [Running a full or partial build](building-what-you-need) for details.
 ```
 
+(building-what-you-need)=
 ##### Running a full or partial build
 
 - To run a **full documentation** (docs + gallery + notebooks) build from scratch, matching what is deployed 
@@ -389,11 +390,23 @@ Depending on what you want to contribute, you may never need to run the full bui
   [preferences](napari-preferences), which are generated from sources in the `napari`
   repository. This will also run all notebook cells.
 
-- If you only need to edit text in the `docs` repository — and neither build sources from `napari/napari` nor execute notebook cells — use the fastest docs-only target:
-  
+
+- If you only want to edit materials in the `docs` repository, including notebook code cell outputs (e.g. tutorials), but you don't need any of the sources in `napari/napari` built:
+
+  ```bash
+  pixi run docs
+  ```
+
+- If you only need to edit text in the `docs` repository — and neither build sources from `napari/napari` nor execute notebook cells — use the **fastest docs-only target**:
+  ```bash
+  make slim
+  ```
+  or
   ```bash
   pixi run slimfast
   ```
+
+  `slim` is single-threaded and `slimfast` is multi-threaded, which should be faster on multi-core machines.
 
 (live-builds)=
 ````{admonition} Update documentation on file change
@@ -406,46 +419,15 @@ For example:
 pixi run html-noplot-live
 ```
 
-or for quick docs-only iteration:
-
-```bash
-pixi run slimfast-live
-```
-The first run will be a full build of that target; subsequent rebuilds only process changed files.
-````
-
-(building-what-you-need)=
-##### Building what you need
-
-````{dropdown} napari/docs and notebooks (no external gallery)
-If you only want to edit materials in the `docs` repository, including notebook code cell outputs (e.g. tutorials), but you don't need any of the sources in `napari/napari` built:
-
-```bash
-pixi run docs
-```
-
-or live preview:
+or
 
 ```bash
 pixi run docs-live
 ```
 Note that this will still execute the `docs` repository notebook code cells, 
-resulting in napari windows popping up repeatedly. The [`-live`
-variant](live-builds) will open a browser preview and auto-rebuild any pages you edit.
-````
+resulting in napari windows popping up repeatedly.
 
-````{dropdown} napari/docs only (fastest)
-If you only want to edit copy in the `docs` repository and don't need notebook cell outputs or external content. Run:
-
-```bash
-make slim
-```
-or
-```bash
-pixi run slimfast
-```
-
-or live preview:
+or for quick docs-only iteration:
 
 ```bash
 pixi run slimfast-live
@@ -454,7 +436,7 @@ These will not build any of the external content (such as the gallery) and will
 not execute code cells. `slimfast` will run the build in parallel, which can be
 significantly faster on multi-core machines (under a minute), while `slimfast-live`
 will open a browser preview and auto-rebuild any pages you edit. 
-See [the `-live` builds note](live-builds).
+The first run will be a full build of that target; subsequent rebuilds only process changed files.
 ````
 
 ##### Additional utilities
