@@ -168,7 +168,7 @@ We now recommend using [`pixi`](https://pixi.sh) for local doc builds. It works 
 ```
 
 (prerequisites)=
-### 0. Prerequisites (using pixi)
+### 0. Prerequisites
 
 [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) then clone the documentation repository [napari/docs](https://github.com/napari/docs) to your machine. To clone the repository, you can follow any of the options in the [GitHub guide to cloning](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) (if you run into issues refer to [the troubleshooting guide](https://docs.github.com/en/repositories/creating-and-managing-repositories/troubleshooting-cloning-errors)).
 We recommend installing the [GitHub CLI](https://docs.github.com/en/github-cli/github-cli/about-github-cli) as it is easy to set up repository access permissions from the GitHub CLI and it comes with additional upside, such as the ability to checkout pull requests.
@@ -234,7 +234,7 @@ If you plan to modify gallery examples or API docstrings, also fork and clone `n
    ```bash
    pixi --version
    ```
-2. Inside the clone napari/docs directory run the following:
+2. Inside your local `napari-docs` folder, run:
     ```bash
     pixi install
     ```
@@ -266,6 +266,12 @@ make linkcheck-files FILES=path/to/your/document.md
 
 (update-toc)=
 ### 3. Update the table of contents (TOC)
+
+```{admonition} Optional: editing examples or docstrings?
+:class: note
+
+If you're changing gallery examples in `napari/napari` or API docstrings and want to preview those local edits, the default `pixi` environment won't pick them up. Use the [advanced make instructions](make-advanced) for that workflow. Most contributors can skip this.
+```
 
 If you are adding a new documentation file, add your document to the correct folder based on its content (see the [list above](#organization-of-the-documentation)) and update `docs/_toc.yml`.
 
@@ -340,7 +346,7 @@ To see the markdown document structure and content change in real-time without b
 ```
 
 (build_docs_locally)=
-#### 4.1. Building locally (using pixi)
+#### 4.1. Building locally
 
 To build the documentation locally, we recommend using [`pixi`](https://pixi.sh), which provides a simple cross-platform approach and automatically clones the [main napari repository](https://github.com/napari/napari) inside its environment.
 
@@ -356,28 +362,35 @@ $ python3 -m http.server --directory docs/_build/html
 ```{note}
 The entire build process pulls together files from multiple sources and can be time consuming, with a full build taking upwards of 20 minutes. Additionally, building the examples gallery, as well as executing notebook cells, will repeatedly launch `napari`, resulting in flashing windows. 
 
-Depending on what you want to contribute, you may never need to run the full build locally. Also see [Building what you need](building-what-you-need) for the `make` variants of the commands below.
+Depending on what you want to contribute, you may never need to run the full build locally. See [Building what you need](building-what-you-need) for details.
 ```
 
-##### Running a full or partial build (pixi)
+##### Running a full or partial build
 
-- Full build (docs + gallery + notebooks):
+- To run a **full documentation** (docs + gallery + notebooks) build from scratch, matching what is deployed 
+  at [napari.org](https://napari.org), run:
+  
   ```bash
   pixi run html
   ```
-- Full minus gallery (docs + notebooks, skip gallery):\
-This will skip the gallery build but it will still build all of the other content, including the
-[UI architecture diagrams](ui-sections), [events reference](events-reference), and
-[preferences](napari-preferences), which are generated from sources in the `napari`
-repository. This will also run all notebook cells.
+  
+  from the root of your local clone of the `napari/docs` repository. Note that this is slow and can take upwards of 20 minutes.
+
+- If the changes you have made to documentation don't involve the gallery of napari examples,
+  which are in the `examples` directory in the `napari` repository, you can speed up this 
+  build by running:
+  
   ```bash
   pixi run html-noplot
   ```
-- Docs with notebook execution (no external gallery content):
-  ```bash
-  pixi run docs
-  ```
-- Fast docs-only (no gallery, no notebook execution):
+  
+  This will skip the gallery build but it will still build all of the other content, including the
+  [UI architecture diagrams](ui-sections), [events reference](events-reference), and
+  [preferences](napari-preferences), which are generated from sources in the `napari`
+  repository. This will also run all notebook cells.
+
+- If you only need to edit text in the `docs` repository — and neither build sources from `napari/napari` nor execute notebook cells — use the fastest docs-only target:
+  
   ```bash
   pixi run slimfast
   ```
@@ -402,7 +415,7 @@ The first run will be a full build of that target; subsequent rebuilds only proc
 ````
 
 (building-what-you-need)=
-##### Building what you need (pixi)
+##### Building what you need
 
 ````{dropdown} napari/docs and notebooks (no external gallery)
 If you only want to edit materials in the `docs` repository, including notebook code cell outputs (e.g. tutorials), but you don't need any of the sources in `napari/napari` built:
@@ -416,11 +429,18 @@ or live preview:
 ```bash
 pixi run docs-live
 ```
+Note that this will still execute the `docs` repository notebook code cells, 
+resulting in napari windows popping up repeatedly. The [`-live`
+variant](live-builds) will open a browser preview and auto-rebuild any pages you edit.
 ````
 
 ````{dropdown} napari/docs only (fastest)
-If you only want to edit copy in the `docs` repository and don't need notebook cell outputs or external content:
+If you only want to edit copy in the `docs` repository and don't need notebook cell outputs or external content. Run:
 
+```bash
+make slim
+```
+or
 ```bash
 pixi run slimfast
 ```
@@ -430,42 +450,41 @@ or live preview:
 ```bash
 pixi run slimfast-live
 ```
+These will not build any of the external content (such as the gallery) and will
+not execute code cells. `slimfast` will run the build in parallel, which can be
+significantly faster on multi-core machines (under a minute), while `slimfast-live`
+will open a browser preview and auto-rebuild any pages you edit. 
+See [the `-live` builds note](live-builds).
 ````
 
-````{dropdown} napari/docs and napari gallery of examples
-If you are working on the napari examples and want to build the whole examples gallery (but skip notebook cell execution in docs):
+##### Additional utilities
 
-```bash
-pixi run slimgallery
-```
+- To clean up (delete) generated content, including auto-generated `.rst` and `.md` files, as well as the `html` files, you can use:
 
-or live preview:
+  ```bash
+  pixi run clean
+  ```
 
-```bash
-pixi run slimgallery-live
-```
-````
+  Running this is a good idea if you have not built the documentation in a long
+  time and there may have been significant changes to the `docs` repository, e.g.
+  changes to the table of contents or layout.
 
-##### Additional utilities (pixi)
+- To clean up the files generated for the examples gallery, you can use:
 
-To clean generated content (auto-generated `.rst`/`.md` and built HTML):
+  ```bash
+  pixi run clean-gallery
+  ```
 
-```bash
-pixi run clean
-```
+  Running this is a good idea if you have not built the documentation in a long
+  time and there may have been significant changes to the `napari` examples.
 
-To clean files generated for the examples gallery:
-
-```bash
-pixi run clean-gallery
-```
-
-To generate external sources (UI sections, events reference, preferences) from the napari repository:
-
-```bash
-pixi run prep-docs
-```
-Note: this can take upwards of 10 minutes. In most cases `pixi run prep-stubs` will suffice to generate stub files.
+- To generate the source files from the napari repository, including the
+[UI architecture diagrams](ui-sections), [events reference](events-reference), and
+[preferences](napari-preferences), you can run:
+  ```bash
+  pixi run prep-docs
+  ```
+  Note: this can take upwards of 10 minutes. In most cases `pixi run prep-stubs` will suffice to generate stub files.
 
 ---
 
@@ -476,6 +495,66 @@ If you need to use `make` (e.g., for headless builds, or to add new gallery exam
 ```{note}
 The `make` workflow requires local clones of both `napari/napari` and `napari/docs` (as siblings) and paths without spaces. For example, `C:\\Users\\myusername\\Documents\\GitHub\\napari-docs` is valid, but `C:\\Users\\my username\\Documents\\GitHub\\napari-docs` is not. Running `make` from a path containing spaces can cause destructive behavior.
 ```
+
+### Make: Prerequisites 
+
+#### Fork and clone the napari and docs repositories
+
+You should first [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo)
+and then clone both the [napari/napari](https://github.com/napari/napari) and the [napari/docs](https://github.com/napari/docs) repositories to your
+machine. To clone these repositories, you can follow any of the options in the [GitHub guide to cloning](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) (if you run into issues refer to [the troubleshooting guide](https://docs.github.com/en/repositories/creating-and-managing-repositories/troubleshooting-cloning-errors)).
+We recommend installing the [GitHub CLI](https://docs.github.com/en/github-cli/github-cli/about-github-cli) as it is easy to set up repository access permissions from the GitHub CLI and it comes with additional upside, such as the ability to checkout pull requests.
+After installing the `GitHub CLI` you can run:
+
+```bash
+gh repo clone <your-username>/napari
+gh repo clone <your-username>/docs napari-docs
+```
+
+````{note}
+To reduce confusion and possible conflicts, the `docs` fork is being cloned into
+a local repository folder named `napari-docs`. Alternately, you could also
+rename the repository when forking `napari/docs` to `napari-docs` and then clone it via `gh repo clone <your-username>/napari-docs`.
+````
+
+```{note}
+The napari documentation is built using `make` which does not work on paths which contain spaces.
+It is important that you clone the `napari/docs` repository to a path that does not contain spaces.
+For example, `C:\Users\myusername\Documents\GitHub\napari-docs` is a valid path, but \
+`C:\Users\my username\Documents\GitHub\napari-docs` is not.
+```
+
+#### Set up a developer installation of napari for docs building
+
+Because the API reference documentation (autogenerated from the napari code docstrings), the example gallery, and the documentation dependencies are sourced from the `napari/napari` repository, before you can build the documentation locally you will need to install from the `napari/napari` repository.
+
+First, navigate to your local clone of the `napari/napari` repository:
+
+```bash
+cd napari
+```
+
+You will need:
+
+- a clean virtual environment (e.g. `conda`)  with Python {{ python_version_range }}—remember to activate it!;
+- a from-source, editable installation of napari with the optional `docs` dependencies and a Qt backend. From the `napari/napari` repository directory run, for example:
+
+  ```bash
+  python -m pip install -e ".[pyqt]" --group docs
+  ```
+  This will use the default Qt backend. For other options, see [the napari installation guide](../../../tutorials/fundamentals/installation.md#choosing-a-different-qt-backend).
+
+  ````{note}
+  You can combine the documentation dependencies with [a development installation of napari](dev-installation) by selecting the Qt extra and both dependency groups, e.g. installing with `.[pyqt]` and adding `--group dev --group docs`.
+  ````
+
+Once the installation is complete, you can proceed to the directory where you cloned the `napari/docs` repository:
+
+```bash
+cd ../napari-docs
+```
+
+Here you will be able to build the documentation, allowing you to preview your document locally as it would appear on `napari.org`.
 
 ###### Make: running a full build
 
@@ -490,38 +569,102 @@ If your changes don't involve the examples gallery from `napari/napari/examples`
 make html-noplot
 ```
 
-If your folder layout differs, you can point `GALLERY_PATH` to the `examples` folder relative to `docs/`:
+````{note}
+The `make html` command above assumes you have a local clone of the
+[`napari/napari`](https://github.com/napari/napari) repo at the same level as
+the `napari/docs` clone. If that's not the case, you can specify the location of
+the examples gallery folder by executing
 
+```bash
+make html GALLERY_PATH=<path-to-examples-folder>
+```
+
+The `GALLERY_PATH` option must be given relative to the `docs` folder. If your
+folder structure is
+
+```
+├── napari-docs
+│   └── docs
+├── napari
+│   ├── binder
+│   ├── examples
+│   ├── napari
+│   ├── napari_builtins
+│   ├── resources
+│   └── tools
+```
+
+Then the command would be
 ```bash
 make html GALLERY_PATH=../../napari/examples
 ```
 
-###### Make: update on file change (live)
+````
 
-Use `-live` variants powered by sphinx-autobuild, e.g.:
+ ````{admonition} Update documentation on file change
+:class: tip
+We've provided several build variants with `-live` that will use
+[sphinx-autobuild](https://github.com/sphinx-doc/sphinx-autobuild).
+When using these `make` variants, when you save a file, re-builds 
+of the changed file will be triggered automatically and will be faster,
+because not everything will be built from scratch. Further, a browser preview 
+will open up automatically at `http://127.0.0.1`, no need for further action! 
+Edit the documents at will, and the browser will auto-reload.
+Once you are done with the live previews, you can exit via <kbd>Ctrl</kbd>+<kbd>C</kbd>
+on your terminal.
+
+For example, if you are not editing the gallery examples in the napari repository, 
+but otherwise want a full build, then you can use:
 
 ```bash
 make html-noplot-live
 ```
+The first run will be a full build (without the gallery) so a number of napari 
+instances will pop up, but then when re-building on save only edited files will
+be rebuilt.
 
-For parallel live builds (may crash on some systems):
-
+For faster reloads, you can try:
 ```bash
 make html-live SPHINXOPTS="-j4"
 ```
+Note: using `-j4` will parallelize the build over 4 cores and can result in crashes.
 
-###### Make: headless GUI builds
+````
 
-Run full builds without popping up windows.
+````{admonition} Headless GUI builds
+:class: tip
 
-- X11 + xvfb:
-  ```bash
-  make docs-xvfb
-  ```
-- Wayland + xwfb-run (from xwayland-run utilities):
-  ```bash
-  make docs-xwfb
-  ```
+If you are running a full build, you can run it in a "headless GUI"
+mode, which will prevent napari windows from popping up during the build.
+
+1. If you are using **X11** as your display server and you have
+   [xvfb](https://www.x.org/releases/X11R7.6/doc/man/man1/Xvfb.1.xhtml)
+   installed on your system, you can use the `docs-xvfb` command:
+
+   ```bash
+   make docs-xvfb
+   ```
+
+   This will prevent all but the first napari window from being shown during the docs
+   build.
+
+2. If you are using **Wayland** as your display server, and you have `xwfb-run` installed
+   on your system (part of the [xwayland-run utilities](https://gitlab.freedesktop.org/ofourdan/xwayland-runcan),
+   you can use the `docs-xwfb` command:
+
+   ```bash
+   make docs-xwfb
+   ```
+
+   Note that you may have to install the `xwayland-run` package manually so that it
+   uses the correct Python environment you are using to build the docs. You can do that
+   by cloning the sources from [the xwayland-run GitLab repository](https://gitlab.freedesktop.org/ofourdan/xwayland-run) and running:
+
+   ```bash
+   meson setup -Dcompositor=weston --prefix=/path/to/env/ -Dpython.install_env=prefix . build
+   meson install -C build
+   ```
+````
 
 ###### Make: building what you need
 
@@ -550,6 +693,10 @@ make slimfast-live
 ````
 
 ````{dropdown} napari/docs and napari gallery of examples
+**If you are working on the napari examples and want to build the whole examples
+gallery, but not other external content nor the `docs` notebook cell outputs**, 
+then you can use:
+
 ```bash
 make slimgallery
 ```
@@ -557,10 +704,14 @@ or
 ```bash
 make slimgallery-live
 ```
+These builds will build the documentation with the entire gallery. The [`-live`
+variant](live-builds) will will open a browser preview and auto-rebuild any pages you edit.
 ````
 
-````{dropdown} Single example from the gallery
-For example, to build only `vortex.py`:
+````{dropdown} napari/docs and a single example in the gallery
+**If you want to work on a single example Python script in the napari repository
+`examples` directory**, you can build the documentation with just a chosen example by
+specifying it by name. For example, to build the `vortex.py` example, run:
 
 ```bash
 make slimgallery-vortex
@@ -569,7 +720,11 @@ or
 ```bash
 make slimgallery-live-vortex
 ```
+This will only execute and build the single chosen example. The [`-live`
+variant](live-builds) will open a browser preview and auto-rebuild the single example or
+any other `docs` pages on edit, but it will not run any other code cells.
 ````
+
 
 ###### Make: utilities
 
